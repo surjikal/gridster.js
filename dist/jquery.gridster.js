@@ -1,4 +1,4 @@
-/*! gridster.js - v0.1.0 - 2012-08-14
+/*! gridster.js - v0.1.0 - 2012-08-16
 * http://gridster.net/
 * Copyright (c) 2012 ducksboard; Licensed MIT */
 
@@ -368,7 +368,9 @@
         items: '.gs_w',
         distance: 1,
         limit: true,
+        limit_top: false,
         offset_left: 0,
+        offset_top: 0,
         autoscroll: true
         // ,drag: function(e){},
         // start : function(e, ui){},
@@ -399,7 +401,11 @@
     *     the mouse must move before dragging should start.
     *    @param {Boolean} [options.limit] Constrains dragging to the width of
     *     the container
+    *    @param {Boolean} [options.limit_top] Constrains dragging to the height of
+    *     the container
     *    @param {offset_left} [options.offset_left] Offset added to the item
+    *     that is being dragged.
+    *    @param {offset_top} [options.offset_top] Offset top added to the item
     *     that is being dragged.
     *    @param {Number} [options.drag] Executes a callback when the mouse is
     *     moved during the dragging.
@@ -416,6 +422,7 @@
       this.$dragitems = $(this.options.items, this.$container);
       this.is_dragging = false;
       this.player_min_left = 0 + this.options.offset_left;
+      this.player_min_top = 0 + this.options.offset_top;
       this.init();
     }
 
@@ -466,6 +473,15 @@
                 left = this.player_max_left;
             }else if(left < this.player_min_left) {
                 left = this.player_min_left;
+            }
+        }
+
+        if (this.options.limit_top) {
+            /* Added to limit top - DM */
+            if (top > this.player_max_top) {
+                top = this.player_max_top;
+            }else if(top < this.player_min_top) {
+                top = this.player_min_top;
             }
         }
 
@@ -588,6 +604,8 @@
         this.player_height = this.$player.height();
         this.player_max_left = (this.$container.width() - this.player_width +
             this.options.offset_left);
+        this.player_max_top = (this.$container.height() - this.player_height +
+            this.options.offset_top);
 
         if (this.options.start) {
             this.options.start.call(this.$player, e, {
@@ -1073,6 +1091,7 @@
         var self = this;
         var draggable_options = $.extend(true, {}, this.options.draggable, {
             offset_left: this.options.widget_margins[0],
+            offset_top: -(this.options.widget_margins[1]),
             items: '.gs_w',
             start: function(event, ui) {
                 self.$widgets.filter('.player-revert')

@@ -197,9 +197,9 @@
         return $({
             left: x1,
             top: y1,
-             width : (x2 - x1),
+            width : (x2 - x1),
             height: (y2 - y1)
-          }).coords().get();
+        }).coords().get();
     };
 
 
@@ -874,7 +874,7 @@
         this.register_widget($w);
 
         this.add_faux_rows(pos.size_y);
-        //this.add_faux_cols(pos.size_x);
+        // this.add_faux_cols(pos.size_x);
 
         this.set_dom_grid_height();
 
@@ -894,6 +894,7 @@
     * @return {HTMLElement} Returns $widget.
     */
     fn.resize_widget = function($widget, size_x, size_y) {
+
         var wgd = $widget.coords().grid;
         size_x || (size_x = wgd.size_x);
         size_y || (size_y = wgd.size_y);
@@ -972,12 +973,13 @@
         wgd.size_y = size_y;
         this.add_to_gridmap(new_grid_data, $widget);
 
-        //update coords instance attributes
+        var width  = (size_x * this.options.widget_base_dimensions[0] + ((size_x - 1) * this.options.widget_margins[0]) * 2);
+        var height = (size_y * this.options.widget_base_dimensions[1] + ((size_y - 1) * this.options.widget_margins[1]) * 2);
+
+        // update coords instance attributes
         $widget.data('coords').update({
-            width: (size_x * this.options.widget_base_dimensions[0] +
-                ((size_x - 1) * this.options.widget_margins[0]) * 2),
-            height: (size_y * this.options.widget_base_dimensions[1] +
-                ((size_y - 1) * this.options.widget_margins[1]) * 2)
+            width: width,
+            height: height
         });
 
         if (size_y > old_size_y) {
@@ -1373,8 +1375,8 @@
         this.placeholder_grid_data = $.extend({}, this.player_grid_data);
 
         //set new grid height along the dragging period
-        this.$el.css('height', this.$el.height() +
-          (this.player_grid_data.size_y * this.min_widget_height));
+        // this.$el.css('height', this.$el.height() +
+          // (this.player_grid_data.size_y * this.min_widget_height));
 
         var colliders = this.faux_grid;
         var coords = this.$player.data('coords').coords;
@@ -1386,7 +1388,6 @@
 
         this.last_cols = [];
         this.last_rows = [];
-
 
         // see jquery.collision.js
         this.collision_api = this.$helper.collision(
@@ -1628,16 +1629,18 @@
         var player_size_y = this.player_grid_data.size_y;
         var player_size_x = this.player_grid_data.size_x;
         var placeholder_cells = this.cells_occupied_by_placeholder;
-        var $gr = this; 
+        var $gr = this;
         var w_queue = {};
 
-        
+
         //Queue Swaps
         $overlapped_widgets.each($.proxy(function(i, w){
             var $w = $(w);
             var wgd = $w.coords().grid;
+
             var outside_col = placeholder_cells.cols[0]+player_size_x-1;
             var outside_row = placeholder_cells.rows[0]+player_size_y-1;
+
             if(wgd.size_x <= player_size_x && wgd.size_y <= player_size_y){
                 if(!$gr.is_swap_occupied(placeholder_cells.cols[0], wgd.row, wgd.size_x, wgd.size_y) && !$gr.is_player_in(placeholder_cells.cols[0], wgd.row)){
                     var key = placeholder_cells.cols[0]+"_"+wgd.row;
@@ -2069,6 +2072,7 @@
     */
     fn.set_placeholder = function(col, row) {
         var phgd = $.extend({}, this.placeholder_grid_data);
+
         var $nexts = this.widgets_below({
                 col: phgd.col,
                 row: phgd.row,
@@ -2733,14 +2737,19 @@
     * @return {Boolean} Returns true if all cells are empty, else return false.
     */
     fn.can_move_to = function(widget_grid_data, col, row, max_row) {
+        // max_row = 3;
+        if (this.options.max_rows) max_row = this.options.max_rows;
+
         var ga = this.gridmap;
         var $w = widget_grid_data.el;
+
         var future_wd = {
             size_y: widget_grid_data.size_y,
             size_x: widget_grid_data.size_x,
             col: col,
             row: row
         };
+
         var result = true;
 
         //Prevents widgets go out of the grid
@@ -3198,6 +3207,8 @@
         var actual_rows = this.rows;
         var max_rows = actual_rows + (rows || 1);
 
+        if (this.options.max_rows) max_rows = this.options.max_rows;
+
         for (var r = max_rows; r > actual_rows; r--) {
             for (var c = this.cols; c >= 1; c--) {
                 this.add_faux_cell(r, c);
@@ -3223,6 +3234,9 @@
     fn.add_faux_cols = function(cols) {
         var actual_cols = this.cols;
         var max_cols = actual_cols + (cols || 1);
+
+        // max_cols = 3;
+        if (this.options.max_cols) max_cols = this.options.max_cols;
 
         for (var c = actual_cols; c < max_cols; c++) {
             for (var r = this.rows; r >= 1; r--) {
@@ -3295,6 +3309,7 @@
         var actual_cols = this.$widgets.map(function() {
             return $(this).attr('data-col');
         });
+
         actual_cols = Array.prototype.slice.call(actual_cols, 0);
         //needed to pass tests with phantomjs
         actual_cols.length || (actual_cols = [0]);
@@ -3307,8 +3322,8 @@
             max_rows += (+$(w).attr('data-sizey'));
         });
 
-        this.cols = Math.max(min_cols, cols, this.options.min_cols);
-        this.rows = Math.max(max_rows, this.options.min_rows);
+        if (this.options.max_rows) this.rows = this.options.max_rows;
+        if (this.options.max_cols) this.cols = this.options.max_cols;
 
         this.baseX = ($(window).width() - aw) / 2;
         this.baseY = this.$wrapper.offset().top;
@@ -3362,6 +3377,33 @@
         return false;
     };
 
+    fn.resize_widget_dimensions = function(options) {
+
+        if (options.widget_margins) {
+          this.options.widget_margins = options.widget_margins;
+        }
+
+        if (options.widget_base_dimensions) {
+          this.options.widget_base_dimensions = options.widget_base_dimensions;
+        }
+
+        this.min_widget_width  = (this.options.widget_margins[0] * 2)
+            + this.options.widget_base_dimensions[0];
+        this.min_widget_height = (this.options.widget_margins[1] * 2)
+            + this.options.widget_base_dimensions[1];
+
+        this.$widgets.each($.proxy(function(i, widget) {
+            var $widget = $(widget);
+            var data = $widget.data();
+            this.resize_widget($widget, data.sizex, data.sizey);
+        }, this));
+
+        this.generate_grid_and_stylesheet();
+        this.get_widgets_from_DOM();
+        this.set_dom_grid_height();
+
+        return false;
+    };
 
     fn.widgets_in_range = function(col1, row1, col2, row2) {
         var valid_cols = [];

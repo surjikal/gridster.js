@@ -1374,9 +1374,8 @@
         this.player_grid_data = this.$player.coords().grid;
         this.placeholder_grid_data = $.extend({}, this.player_grid_data);
 
-        //set new grid height along the dragging period
-        // this.$el.css('height', this.$el.height() +
-          // (this.player_grid_data.size_y * this.min_widget_height));
+        // set new grid height along the dragging period
+        this.$el.css('height', this.$el.height() + (this.player_grid_data.size_y * this.min_widget_height));
 
         var colliders = this.faux_grid;
         var coords = this.$player.data('coords').coords;
@@ -2737,7 +2736,6 @@
     * @return {Boolean} Returns true if all cells are empty, else return false.
     */
     fn.can_move_to = function(widget_grid_data, col, row, max_row) {
-        // max_row = 3;
         if (this.options.max_rows) max_row = this.options.max_rows;
 
         var ga = this.gridmap;
@@ -3205,9 +3203,8 @@
     */
     fn.add_faux_rows = function(rows) {
         var actual_rows = this.rows;
-        var max_rows = actual_rows + (rows || 1);
-
-        if (this.options.max_rows) max_rows = this.options.max_rows;
+        var max_rows = this.options.max_rows ? this.options.max_rows
+                                             : actual_rows + (rows || 1);
 
         for (var r = max_rows; r > actual_rows; r--) {
             for (var c = this.cols; c >= 1; c--) {
@@ -3233,10 +3230,8 @@
     */
     fn.add_faux_cols = function(cols) {
         var actual_cols = this.cols;
-        var max_cols = actual_cols + (cols || 1);
-
-        // max_cols = 3;
-        if (this.options.max_cols) max_cols = this.options.max_cols;
+        var max_cols = this.options.max_cols ? this.options.max_cols
+                                             : actual_cols + (cols || 1);
 
         for (var c = actual_cols; c < max_cols; c++) {
             for (var r = this.rows; r >= 1; r--) {
@@ -3322,8 +3317,11 @@
             max_rows += (+$(w).attr('data-sizey'));
         });
 
-        if (this.options.max_rows) this.rows = this.options.max_rows;
-        if (this.options.max_cols) this.cols = this.options.max_cols;
+        this.rows = this.options.max_rows ? this.options.max_rows
+                                          : Math.max(max_rows, this.options.min_rows);
+
+        this.cols = this.options.max_cols ? this.options.max_cols
+                                          : Math.max(min_cols, cols, this.options.min_cols);
 
         this.baseX = ($(window).width() - aw) / 2;
         this.baseY = this.$wrapper.offset().top;
